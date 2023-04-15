@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+	<div>
+		<p>欢迎使用一键添加功能! 如有问题请联系Email</p>
+		<p>mr.lai.who@gmail.com</p>
+	</div>
+
+	<div>
+		<label for="timeWait">间隔时间(ms):</label>
+		<input type="number" id="timeWait" name="timeWait" min="100" value="500">
+	</div>
+
+	<div>
+		<label for="name">数据源:</label>
+		<label for="avatar">请选择需要处理的文件:</label>
+		<input type="file" id="docpicker" name="docpicker"
+			accept=".txt,.xlsx,.xls,.csv,.execl,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+	</div>
+
+	<div>
+		<textarea id="textshow" rows="10" cols="40" readonly></textarea>
+	</div>
+
+
+	<div id="enterCode">
+		<button>提交处理</button>
+	</div>
+
+
+	<script src="home.js"></script>
+	<script type="module" src="./background.js"></script>
+	<script type="module" src="./xlsx.core.min.js"></script>
+
+</body>
+
+</html>
