@@ -2,12 +2,16 @@
   "name": "AutoEnterBillNo",
   "description": "自动导入总单号提交!",
   "version": "1.0",
-  "manifest_version": 3,
+  "manifest_version": 2,
   "background": {
-    "service_worker": "background.js"
+    "scripts": ["background.js"],
+    "persistent": false
   },
-  "permissions": ["storage", "activeTab", "scripting"],
-  "action": {
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "browser_action": {
 	  "default_popup": "home.html",
 	  "default_icon": {
 		  "16": "images/get_started16.png",
@@ -23,6 +27,4 @@
 	  "128": "images/get_started128.png"
   },
   "options_page": "options.html"
-
 }
-

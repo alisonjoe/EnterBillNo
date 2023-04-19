@@ -49,50 +49,85 @@ function handleFileSelect(event) {
   reader.readAsBinaryString(file);
 }
 
-// 注册按钮点击回调函数
-enterCodeButton.addEventListener("click", async () => {
-  const timeWait = document.getElementById("timeWait").value;
-  // 调用Chrome接口取出当前标签页
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  // alert(tab.id);
-  // 以当前标签页为上下文，执行setPageBackgroundColor函数
-  chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    args:[{billNoList: gBillNoList, timeWait: timeWait}],
-    function: processBillNoList,
+
+enterCodeButton.addEventListener("click", function() {
+  var timeWait = document.getElementById("timeWait").value;
+  console.log("addEventListener begin");
+  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+    var tab = tabs[0];
+    chrome.tabs.executeScript(tab.id, {
+      code: "(" + fillBillNo.toString() + ")({ billNoList: " + JSON.stringify(gBillNoList) + ", timeWait: " + timeWait + " });"
+    }, function() {
+      // 回调函数执行完毕后再进行异步操作
+      console.log('所有运单已经处理完成！');
+    });
   });
 });
 
 
-async function processBillNoList(args) {
-  const billNoList = args.billNoList;
-  const timeWait = args.timeWait < 100 ? 100:args.timeWait;
-  // alert(`processBillNoList list ${billNoList.length} 个元素`);
-  for (let i = 0; i < billNoList.length; ++i) {
-    const billNo = billNoList[i];
-    // openwrt passwall port 调试用
-    // var textarea = document.querySelector("#cbid\\.passwall\\.375abe461ba845d3b30f23a7aa506065\\.port");
-    var textarea = document.querySelector("#waybillNo");
-    if (!textarea) {
-      alert("没有查找到编辑框");
-      return;
+function fillBillNo(args) {
+  console.log('fillBillNo begin！');
+  console.log(document.title);
+  // const targetNode = document.querySelector("#cbid\\.passwall\\.375abe461ba845d3b30f23a7aa506065\\.port");
+  const targetNode = document.querySelector("#waybillNo");
+  if (targetNode) {
+    console.log('目标节点已经存在！');
+    for (var i = 0; i < args.billNoList.length; ++i) {
+      var billNo = args.billNoList[i];
+      console.log('processBillNoList ' + billNo);
+
+      setTimeout((function (billNo, targetNode) {
+        return function () {
+          targetNode.value = billNo;
+
+          var enterKeyEvent = new KeyboardEvent("keydown", {
+            key: "Enter",
+            bubbles: true,
+            cancelable: true,
+            shiftKey: false
+          });
+
+          targetNode.dispatchEvent(enterKeyEvent);
+        };
+      })(billNo, targetNode), i * args.timeWait);
     }
-    await new Promise(resolve => setTimeout(resolve, timeWait)); // 等待 500ms
-    textarea.value = billNo;
-    // var form = document.querySelector("#maincontent > div > form");
-    // if (!form) {
-    //   alert("没有查找到表单");
-    //   return;
-    // }
-    // form.submit();
-    // 如果模拟回车不成功,需要查找form进行提交
-    // 创建并触发一个 KeyboardEvent 对象
-    var enterKeyEvent = new KeyboardEvent("keydown", {
-      key: "Enter",
-      bubbles: true,
-      cancelable: true,
-      shiftKey: false,
+    console.log('processBillNoList end');
+  } else {
+    console.log('目标节点不存在！');
+    alert('目标节点不存在！等待加载成功或刷新重试');
+    const observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
+        if (mutation.type === 'childList') {
+          const textArea = mutation.target.querySelector('textarea');
+          if (textArea) {
+            alert('文本编辑框已经加载成功！');
+            observer.disconnect();
+            for (var i = 0; i < args.billNoList.length; ++i) {
+              var billNo = args.billNoList[i];
+              console.log('processBillNoList ' + billNo);
+
+              setTimeout((function (billNo, targetNode) {
+                return function () {
+                  targetNode.value = billNo;
+
+                  var enterKeyEvent = new KeyboardEvent("keydown", {
+                    key: "Enter",
+                    bubbles: true,
+                    cancelable: true,
+                    shiftKey: false
+                  });
+
+                  targetNode.dispatchEvent(enterKeyEvent);
+                };
+              })(billNo, targetNode), i * args.timeWait);
+            }
+          }
+        }
+      });
     });
-    textarea.dispatchEvent(enterKeyEvent);
+    console.log('fillBillNo listen！');
+
+    const config = { childList: true, subtree: true };
+    observer.observe(document.body, config);
   }
 }
